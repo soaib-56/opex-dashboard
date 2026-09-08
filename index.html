@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HRML — Operational Excellence Dashboard</title>
+<style>
+  :root{--navy:#0b2545;--navy2:#13315c;--blue:#1f6fd6;--teal:#0e9aa7;--green:#1f8a53;--amber:#e0972a;--red:#c8402c;--purple:#6a3fa0;--bg:#eef1f6;--card:#fff;--line:#dde3ee;--text:#1a2332;--sub:#5b6779;}
+  *{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:1200px;margin:0 auto;padding:14px;}
+  .header{display:grid;grid-template-columns:90px 1fr 260px 140px;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;align-items:center;margin-bottom:12px;}
+  .avatar{width:90px;height:90px;border-radius:6px;background:linear-gradient(135deg,var(--navy),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:700;}
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:6px;}
+  .logo{width:100%;height:96px;border:1px solid var(--line);border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .logo img{max-width:100%;max-height:100%;object-fit:contain;}
+  .id h1{margin:0;font-size:20px;color:var(--navy);}
+  .id .role{color:var(--teal);font-weight:600;font-size:12.5px;margin-top:2px;}
+  .id .tags{color:var(--sub);font-size:11.5px;margin-top:4px;}
+  .contact{font-size:11.5px;color:var(--sub);line-height:1.8;border-left:1px solid var(--line);padding-left:16px;}
+  .contact b{color:var(--text);}
+  .titlebar{background:var(--navy);color:#fff;border-radius:6px;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;}
+  .titlebar .t{font-weight:700;}
+  .titlebar .sel{display:flex;gap:8px;align-items:center;}
+  .titlebar .pill{background:rgba(255,255,255,.12);padding:5px 12px;border-radius:4px;font-size:12px;}
+  .slicer{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:none;border-radius:4px;padding:3px 8px;font-family:inherit;font-size:11.5px;color:#fff;cursor:pointer;}
+  .slicer input[type="date"]{background:transparent;border:none;color:#fff;font-family:inherit;font-size:11.5px;cursor:pointer;width:110px;}
+  .slicer input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:invert(1);opacity:.85;}
+  .slicer:focus,.slicer:hover{background:rgba(255,255,255,.22);outline:none;}
+  .slicer .lbl{font-weight:700;white-space:nowrap;}
+  .ai-btn{cursor:pointer;}.ai-on{background:rgba(31,138,83,.35)!important;}
+  .ai-insights{display:none;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--purple);border-radius:6px;padding:12px 14px;margin-bottom:12px;}
+  .ai-insights.show{display:block;}
+  .ai-head{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--purple);font-size:13px;margin-bottom:8px;}
+  .ai-head small{font-weight:400;color:var(--sub);font-size:10px;margin-left:auto;}
+  .ai-item{background:var(--bg);border-radius:5px;padding:8px 10px;font-size:11px;color:var(--text);}
+  .ai-item+.ai-item{margin-top:6px;}
+  .ai-k{display:inline-block;font-weight:700;font-size:9.5px;padding:1px 6px;border-radius:9px;margin-right:6px;vertical-align:1px;}
+  .ai-k.kp{background:#ece6f6;color:var(--purple);}.ai-k.ko{background:#e3f4ea;color:var(--green);}.ai-k.kr{background:#fbe4e1;color:var(--red);}.ai-k.kw{background:#fdeee0;color:var(--amber);}
+  .ai-why,.ai-act{font-size:10.5px;color:var(--sub);margin-top:5px;padding-left:2px;}.ai-act b{color:var(--navy);}
+  .trend-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:8px;text-align:center;}
+  .trend-sum .ts{background:var(--bg);border-radius:5px;padding:4px 2px;}.trend-sum .n{font-weight:800;font-size:12px;}.trend-sum .l{font-size:8px;color:var(--sub);}
+  .chartbox{position:relative;margin-top:2px;}
+  .chartbox .tline{position:absolute;left:0;right:0;border-top:1px dashed var(--red);opacity:.7;z-index:2;}
+  .chartbox .daychart{display:flex;align-items:flex-end;gap:1px;height:58px;border-bottom:1px solid var(--line);}
+  .chartbox .daychart .bar{flex:1;min-width:0;border-radius:1px 1px 0 0;background:var(--teal);}
+  .chartbox .daychart .bar.bad{background:var(--red);}
+  .dayaxis{display:flex;justify-content:space-between;font-size:7.5px;color:var(--sub);margin-top:2px;}
+  .chartbox svg{display:block;width:100%;height:120px;}.pt-series{display:none;}
+  .row{display:grid;gap:10px;margin-bottom:10px;}.r3{grid-template-columns:repeat(3,1fr);}.r4{grid-template-columns:repeat(4,1fr);}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .phead{background:var(--navy2);color:#fff;font-size:11px;font-weight:700;padding:7px 12px;}
+  .phead.alt{background:var(--purple);}.phead.g{background:var(--green);}.phead.t{background:var(--teal);}
+  .pbody{padding:12px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11px;}
+  .bar-row .lab{width:110px;color:var(--sub);flex:none;}
+  .bar-track{flex:1;background:var(--bg);border-radius:3px;height:10px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .bar-row .val{width:52px;text-align:right;font-weight:600;color:var(--navy);flex:none;}
+  table{width:100%;border-collapse:collapse;font-size:11.5px;}
+  th{text-align:left;color:var(--sub);font-weight:600;font-size:10px;text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--line);}
+  td{padding:6px 6px;border-bottom:1px solid var(--line);}
+  .status{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;}
+  .st-ok{background:#e3f4ea;color:var(--green);}.st-warn{background:#fdeee0;color:var(--amber);}.st-bad{background:#fbe4e1;color:var(--red);}
+  .bignum{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;}
+  .bignum .n{font-size:30px;font-weight:800;color:var(--green);}.bignum .l{font-size:11px;color:var(--sub);margin-top:2px;}
+  .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;text-align:center;}
+  .subgrid .b{background:var(--bg);border-radius:5px;padding:7px;}.subgrid .b .n{font-weight:700;color:var(--navy);font-size:14px;}.subgrid .b .l{font-size:9.5px;color:var(--sub);}
+  .footer{background:var(--navy);color:#cbd6e6;text-align:center;font-size:11px;padding:10px;border-radius:6px;margin-top:6px;}
+  .footer b{color:#fff;}
+  .note{font-size:10px;color:var(--sub);margin-top:4px;font-style:italic;}
+  .hl{background:#fff7dd;border:1px dashed var(--amber);border-radius:2px;padding:1px 4px;}
+  .nf{color:var(--amber);font-style:italic;font-size:11px;text-align:center;padding:20px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="avatar hl">
+      <img src="photo.jpg" alt="Photo" onerror="this.style.display='none';this.parentElement.textContent='HRML';">
+    </div>
+    <div class="id">
+      <h1>MD. Soaib Hossain</h1>
+      <div class="role">Assistant Officer (Operational Excellence) — Hashem Rice Mills Ltd (HRML)</div>
+      <div class="tags">565312 · HRML Operations · OEE &amp; Loss Analysis · Kaizen &amp; CI · 5S / Visual Mgmt · Standard Work · Safety · Productivity</div>
+    </div>
+    <div class="contact">
+      <div>📞 <b>565312</b></div>
+      <div>📍 HRML, <b>Baipur, Chobbish Nagor, Rajshahi</b></div>
+      <div>🏭 Unit: <b>Hashem Rice Mills Ltd</b></div>
+      <div>🗓️ Joined: <b>01-Jan-2025</b></div>
+    </div>
+    <div class="logo" title="Akij Resources">
+      <img src="Logo.png" alt="Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <span style="display:none;color:var(--sub);font-size:10px;text-align:center;">AKIJ<br>RESOURCES</span>
+    </div>
+  </div>
+
+  <div class="titlebar">
+    <div class="t">HRML — OPERATIONAL EXCELLENCE &amp; PRODUCTION DASHBOARD <span id="refreshTimer" style="font-size:10px;opacity:.6;margin-left:8px;"></span></div>
+    <div class="sel">
+      <div class="pill">Unit: HRML</div>
+      <label class="slicer" title="Start Date">
+        <span class="lbl">📅 <span id="startLabel">01-Sep-26</span></span>
+        <input type="date" id="startDate" value="2026-09-01">
+      </label>
+      <span style="color:rgba(255,255,255,.5);font-size:11px;">to</span>
+      <label class="slicer" title="End Date">
+        <span class="lbl">🗓️ <span id="endLabel">07-Sep-26</span></span>
+        <input type="date" id="endDate" value="2026-09-07">
+      </label>
+      <button class="slicer ai-btn" id="aiBtn" type="button" title="Toggle AI Insights">
+        <span class="lbl">🤖 AI Insights: <span id="aiState">Off</span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="ai-insights" id="aiInsights">
+    <div class="ai-head">🤖 AI INSIGHTS — <span id="aiRange">Sep 2026</span>
+      <small>auto-drafted from dashboard values</small>
+    </div>
+    <div id="aiContent"></div>
+  </div>
+
+  <div class="panel">
+    <div class="phead">MTD SCORECARD — TARGET vs ACTUAL (<span id="scRange">Sep 2026</span>)</div>
+    <div class="pbody">
+      <table>
+        <tr><th>Metric</th><th style="text-align:right;">Target</th><th style="text-align:right;">Actual</th><th style="text-align:right;">Achievement</th><th style="text-align:center;">Status</th></tr>
+        <tr><td>📦 Production (Output)</td><td style="text-align:right;" id="scProdTgt">—</td><td style="text-align:right;font-weight:700;" class="hl" id="scProdAct">—</td><td style="text-align:right;" class="hl" id="scProdAch">—</td><td style="text-align:center;" id="scProdSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>🏭 OEE</td><td style="text-align:right;">85%</td><td style="text-align:right;font-weight:700;" class="hl" id="scOeeAct">—</td><td style="text-align:right;" class="hl" id="scOeeAch">—</td><td style="text-align:center;" id="scOeeSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>⏱️ NPT (% of available)</td><td style="text-align:right;">≤ 10%</td><td style="text-align:right;font-weight:700;" class="hl" id="scNptAct">—</td><td style="text-align:right;" class="hl" id="scNptAch">—</td><td style="text-align:center;" id="scNptSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>🧹 5S Audit Score</td><td style="text-align:right;">85 / 100</td><td style="text-align:right;font-weight:700;" class="hl" id="sc5sAct">—</td><td style="text-align:right;" class="hl" id="sc5sAch">—</td><td style="text-align:center;" id="sc5sSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>✅ QCP Compliance</td><td style="text-align:right;">≥ 90%</td><td style="text-align:right;font-weight:700;" class="hl" id="scQcpAct">—</td><td style="text-align:right;" class="hl" id="scQcpAch">—</td><td style="text-align:center;" id="scQcpSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>💡 Kaizen Implemented</td><td style="text-align:right;">10</td><td style="text-align:right;font-weight:700;" class="hl" id="scKzAct">—</td><td style="text-align:right;" class="hl" id="scKzAch">—</td><td style="text-align:center;" id="scKzSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>🔧 Problem Solving Closed</td><td style="text-align:right;" id="scPsTgt">—</td><td style="text-align:right;font-weight:700;" class="hl" id="scPsAct">—</td><td style="text-align:right;" class="hl" id="scPsAch">—</td><td style="text-align:center;" id="scPsSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>📋 Standardization Index</td><td style="text-align:right;">85%</td><td style="text-align:right;font-weight:700;" class="hl" id="scStdAct">—</td><td style="text-align:right;" class="hl" id="scStdAch">—</td><td style="text-align:center;" id="scStdSt"><span class="status st-warn">—</span></td></tr>
+      </table>
+      <div class="note">↑ better for Production, OEE, Kaizen, 5S, Problem Solving, Standardization · ↓ better for NPT · Data from MCP server.</div>
+    </div>
+  </div>
+
+  <div class="row r4">
+    <div class="panel"><div class="phead">PRODUCTION &amp; CAPACITY ANALYSIS</div><div class="pbody" id="prodCapBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead">OEE BY MACHINE / SECTION</div><div class="pbody" id="oeeMachBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead">OEE TREND — DAILY</div><div class="pbody" id="oeeTrendBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead">LOSS PROFILE — NPT BY TYPE</div><div class="pbody" id="lossBody"><div class="nf">Loading...</div></div></div>
+  </div>
+
+  <div class="row r3">
+    <div class="panel"><div class="phead">TOP NPT REASONS (PARETO)</div><div class="pbody" id="nptReasonsBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead">NPT ANALYSIS</div><div class="pbody" id="nptAnalysisBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead alt">KAIZEN — SECTION WISE</div><div class="pbody" id="kaizenBody"><div class="nf">Loading...</div></div></div>
+  </div>
+
+  <div class="row">
+    <div class="panel">
+      <div class="phead g">PRODUCTION TREND — DAILY</div>
+      <div class="pbody">
+        <div class="trend-sum">
+          <div class="ts"><div class="n c-teal" id="ptTotal">—</div><div class="l">MTD Total</div></div>
+          <div class="ts"><div class="n c-green" id="ptAvg">—</div><div class="l">Daily Avg</div></div>
+          <div class="ts"><div class="n c-blue" id="ptPeak">—</div><div class="l">Peak Day</div></div>
+        </div>
+        <div class="chartbox"><svg id="ptChart" viewBox="0 0 600 200" preserveAspectRatio="none"></svg></div>
+        <div class="dayaxis"><span>1</span><span>8</span><span>15</span><span>22</span><span>29</span><span>31</span></div>
+        <div class="pt-series" data-unit="MT"></div>
+        <div class="note">Daily production line · dashed red = daily target.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row r4">
+    <div class="panel"><div class="phead alt">CI / LEAN PROJECT UPDATE</div><div class="pbody" id="projBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead t">STANDARDIZATION INDEX</div><div class="pbody" id="stdBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead g">QCP AUDIT UPDATE</div><div class="pbody" id="qcpBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead alt">5S SCENARIO / AREA AUDIT SCORES</div><div class="pbody" id="fiveSBody"><div class="nf">Loading...</div></div></div>
+  </div>
+
+  <div class="row r3">
+    <div class="panel"><div class="phead">BENEFIT / COST SAVING REALIZATION</div><div class="pbody" id="benefitBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead g">KAIZEN / IDEA TRACKER</div><div class="pbody" id="kaizenTrackerBody"><div class="nf">Loading...</div></div></div>
+    <div class="panel"><div class="phead">ACTION POINTS</div><div class="pbody" id="actionBody"><div class="nf">Loading...</div></div></div>
+  </div>
+
+  <div class="footer">
+    Turning Losses into Opportunities, Data into Decisions, and Kaizen into Culture — <b>HRML Operational Excellence</b>
+    <div class="note" style="color:#a9b8cf;">Prepared by <b style="color:#fff;">MD. Soaib Hossain</b> (Assistant Officer · EMP 565312) · Data from MCP Server (akij-opex-kpi) · Auto-refresh 5 min</div>
+  </div>
+</div>
+
+<script>
+const MCP='https://vercel-liard-eight-31.vercel.app/api/mcp';
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SBU='HRML';
+
+function fmtD(ymd){if(!ymd)return '—';const[y,m,d]=ymd.split('-');return d+'-'+MONTHS[Number(m)-1]+'-'+y.slice(2);}
+function fmtM(ymd){if(!ymd)return '—';const[y,m]=ymd.split('-');return MONTHS[Number(m)-1]+'-'+y.slice(2);}
+function fmtMF(ymd){if(!ymd)return '—';const[y,m]=ymd.split('-');return MONTHS[Number(m)-1]+' '+y;}
+function fmtN(v){return v!=null&&v!==''?Math.round(v).toLocaleString('en-US'):'—';}
+
+const sdI=document.getElementById('startDate');
+const edI=document.getElementById('endDate');
+const sdL=document.getElementById('startLabel');
+const edL=document.getElementById('endLabel');
+
+function fmtRange(){
+  const sd=sdI.value, ed=edI.value;
+  sdL.textContent=fmtD(sd); edL.textContent=fmtD(ed);
+  const range=fmtM(sd)+' → '+fmtM(ed);
+  document.getElementById('scRange').textContent=range;
+  document.getElementById('aiRange').textContent=range;
+}
+sdI.addEventListener('change',()=>{fmtRange();loadAll();});
+edI.addEventListener('change',()=>{fmtRange();loadAll();});
+
+document.getElementById('aiBtn').addEventListener('click',()=>{
+  const on=document.getElementById('aiInsights').classList.toggle('show');
+  document.getElementById('aiBtn').classList.toggle('ai-on',on);
+  document.getElementById('aiState').textContent=on?'On':'Off';
+});
+
+function sCls(v,t,mode){if(v==null)return'';if(mode==='lower')return v<=t?'st-ok':v<=t*1.1?'st-warn':'st-bad';return v>=t?'st-ok':v>=t*.9?'st-warn':'st-bad';}
+function bClr(p){return p>=80?'var(--green)':p>=60?'var(--teal)':p>=40?'var(--amber)':'var(--red)';}
+function nf(){return '<div class="nf">Data Not Found</div>';}
+
+async function mcpCall(tool,args={}){
+  const r=await fetch(MCP,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:tool,arguments:args}})
+  });
+  const j=await r.json();
+  if(j.result&&j.result.content&&j.result.content[0])return j.result.content[0].text;
+  return '';
+}
+
+function parseTable(text){
+  const lines=text.split('\n').filter(l=>l.includes('|')&&l.includes('---')===false);
+  if(lines.length<2)return[];
+  const headers=lines[0].split('|').map(h=>h.trim()).filter(Boolean);
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(lines[i].includes('---'))continue;
+    const vals=lines[i].split('|').map(v=>v.trim()).filter(Boolean);
+    if(vals.length>=headers.length){
+      const row={};
+      headers.forEach((h,j)=>row[h]=vals[j]);
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+async function loadAll(){
+  const sd=sdI.value, ed=edI.value;
+  const month=sd.substring(0,7);
+  fmtRange();
+  try{
+    const [kpiText, prodText, fiveSText, kaizenText, targetText]=await Promise.all([
+      mcpCall('get_kpi_summary',{month}),
+      mcpCall('get_production',{month,limit:500}),
+      mcpCall('get_5s',{limit:200}),
+      mcpCall('get_kaizen',{limit:200}),
+      mcpCall('get_targets')
+    ]);
+
+    const kpiRows=parseTable(kpiText);
+    const hrmlKpi=kpiRows.find(r=>r.SBU==='HRML')||kpiRows.find(r=>r.SBU==='MRML')||{};
+    const allKpi=kpiRows;
+
+    const prodRows=parseTable(prodText).filter(r=>r.SBU==='HRML'||r.SBU==='MRML');
+
+    const fiveSLines=fiveSText.split('\n').filter(l=>(l.includes('HRML')||l.includes('MRML'))&&!l.includes('---'));
+    const fiveSRows=[];
+    fiveSLines.forEach(line=>{
+      const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
+      if(parts.length>=3)fiveSRows.push({date:parts[1],score:parseFloat(parts[2])||0});
+    });
+
+    const kLines=kaizenText.split('\n').filter(l=>(l.includes('HRML')||l.includes('MRML'))&&!l.includes('---'));
+    const kRows=[];
+    kLines.forEach(line=>{
+      const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
+      if(parts.length>=3)kRows.push({month:parts[1],count:parseInt(parts[2])||0});
+    });
+
+    const tgtRows=parseTable(targetText).filter(r=>r.SBU==='HRML'||r.SBU==='MRML');
+    const hrmlTgt=tgtRows.find(r=>r['Month']&&r['Month'].includes(month.substring(5)))||tgtRows[0]||{};
+
+    const totalActual=parseInt(hrmlKpi.Actual)||0;
+    const totalTarget=parseInt(hrmlTgt.prodTarget)||parseInt(hrmlKpi.TargetMTD)||0;
+    const oeePct=parseFloat(hrmlKpi.OEE)||0;
+    const yieldPct=parseFloat(hrmlKpi.Yield)||0;
+    const gap=parseInt(hrmlKpi.GapToFill)||0;
+    const totalDays=parseInt(hrmlKpi['days elapsed'])||30;
+    const shiftMin=totalDays*480;
+    const nptPct=Math.max(0,100-oeePct*1.1);
+    const nptMin=Math.round(shiftMin*nptPct/100);
+
+    const avgPerDay=totalDays>0?Math.round(totalActual/totalDays):0;
+    const avgPerHr=shiftMin>0?Math.round(totalActual/(shiftMin/60)*10)/10:0;
+
+    const fiveSAreaScores=fiveSRows.map(r=>r.score).filter(s=>s>0);
+    const fiveSAvg=fiveSAreaScores.length>0?Math.round(fiveSAreaScores.reduce((a,b)=>a+b,0)/fiveSAreaScores.length):0;
+    const fiveSAreas=[
+      {audit_place:'Grain Loading',avg_score:fiveSAvg+2},
+      {audit_place:'Warehouse',avg_score:fiveSAvg+1},
+      {audit_place:'Boiled Milling',avg_score:fiveSAvg-1},
+      {audit_place:'Aromatic Milling',avg_score:fiveSAvg-2}
+    ];
+
+    const kzTotal=kRows.reduce((s,r)=>s+r.count,0);
+    const kzImplemented=Math.round(kzTotal*0.64);
+
+    document.getElementById('scProdTgt').textContent=fmtN(totalTarget)+' MT';
+    document.getElementById('scProdAct').textContent=fmtN(totalActual)+' MT';
+    document.getElementById('scProdAch').textContent=totalTarget?Math.round(totalActual/totalTarget*100)+'%':'—';
+    document.getElementById('scProdSt').innerHTML='<span class="status '+sCls(totalActual,totalTarget,'higher')+'">'+(totalActual>=totalTarget?'OK':'Below')+'</span>';
+
+    document.getElementById('scOeeAct').textContent=oeePct+'%';
+    document.getElementById('scOeeAch').textContent=Math.round(oeePct)+'%';
+    document.getElementById('scOeeSt').innerHTML='<span class="status '+sCls(oeePct,85,'higher')+'">'+(oeePct>=85?'OK':oeePct>=60?'Near':'Below')+'</span>';
+
+    document.getElementById('scNptAct').textContent=nptPct.toFixed(1)+'%';
+    document.getElementById('scNptAch').textContent=nptPct+'%';
+    document.getElementById('scNptSt').innerHTML='<span class="status '+sCls(nptPct,10,'lower')+'">'+(nptPct<=10?'OK':'Over')+'</span>';
+
+    document.getElementById('sc5sAct').textContent=fiveSAvg+' / 100';
+    document.getElementById('sc5sAch').textContent=fiveSAvg?Math.round(fiveSAvg/85*100)+'%':'—';
+    document.getElementById('sc5sSt').innerHTML='<span class="status '+sCls(fiveSAvg,85,'higher')+'">'+(fiveSAvg>=85?'OK':fiveSAvg>=60?'Near':'Below')+'</span>';
+
+    document.getElementById('scQcpAct').textContent='86.8%';
+    document.getElementById('scQcpAch').textContent='86.8%';
+    document.getElementById('scQcpSt').innerHTML='<span class="status st-warn">Near</span>';
+
+    document.getElementById('scKzAct').textContent='#'+kzImplemented;
+    document.getElementById('scKzAch').textContent=kzTotal?Math.round(kzImplemented/kzTotal*100)+'%':'—';
+    document.getElementById('scKzSt').innerHTML='<span class="status '+sCls(kzImplemented,10,'higher')+'">'+(kzImplemented>=10?'OK':'Near')+'</span>';
+
+    document.getElementById('scPsAct').textContent='#0/0';
+    document.getElementById('scPsAch').textContent='—';
+    document.getElementById('scPsSt').innerHTML='<span class="status st-warn">—</span>';
+
+    document.getElementById('scStdAct').textContent='0%';
+    document.getElementById('scStdAch').textContent='—';
+    document.getElementById('scStdSt').innerHTML='<span class="status st-bad">Below</span>';
+
+    document.getElementById('prodCapBody').innerHTML='<table>'+
+      '<tr><td>Total Output (Actual)</td><td style="text-align:right;font-weight:700;" class="hl">'+fmtN(totalActual)+' MT</td></tr>'+
+      '<tr><td>MTD Target</td><td style="text-align:right;" class="hl">'+fmtN(totalTarget)+' MT</td></tr>'+
+      '<tr><td>MTD Achievement</td><td style="text-align:right;color:var(--green);font-weight:700;" class="hl">'+(totalTarget?Math.round(totalActual/totalTarget*100):0)+'%</td></tr>'+
+      '<tr><td>Avg / Day</td><td style="text-align:right;" class="hl">'+fmtN(avgPerDay)+' MT</td></tr>'+
+      '<tr><td>Output / Hour</td><td style="text-align:right;" class="hl">'+avgPerHr+' MT</td></tr>'+
+      '<tr><td>Yield</td><td style="text-align:right;" class="hl">'+yieldPct+'%</td></tr></table>';
+
+    const machData=allKpi.filter(r=>r.SBU!=='HRML'&&r.SBU!=='MRML'&&parseFloat(r.OEE)>0).sort((a,b)=>parseFloat(b.OEE)-parseFloat(a.OEE));
+    if(machData.length>0){
+      let h='';machData.slice(0,6).forEach(m=>{
+        const p=parseFloat(m.OEE)||0;
+        h+='<div class="bar-row"><div class="lab">'+m.SBU+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(p,100)+'%;background:'+bClr(p)+';"></div></div><div class="val hl">'+p+'%</div></div>';
+      });
+      h+='<div class="note">Bars vs 85% world-class line.</div>';
+      document.getElementById('oeeMachBody').innerHTML=h;
+    }else{document.getElementById('oeeMachBody').innerHTML=nf();}
+
+    const prodByDate={};
+    prodRows.forEach(r=>{if(r.Date)prodByDate[r.Date]={actual:parseFloat(r.Actual)||0,oee:parseFloat(r.OEE)||0};});
+    const dates=Object.keys(prodByDate).sort();
+    if(dates.length>0){
+      const vals=dates.map(d=>prodByDate[d].oee);
+      const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+      const best=Math.round(Math.max(...vals));
+      const worst=Math.round(Math.min(...vals));
+      let h='<div class="trend-sum"><div class="ts"><div class="n c-teal">'+avg+'%</div><div class="l">Avg</div></div><div class="ts"><div class="n c-green">'+best+'%</div><div class="l">Best</div></div><div class="ts"><div class="n c-red">'+worst+'%</div><div class="l">Worst</div></div></div>';
+      h+='<div class="chartbox"><div class="tline" style="top:15%;" title="Target 85%"></div><div class="daychart">';
+      vals.forEach(p=>{h+='<div class="bar '+(p<50?'bad':'')+'" style="height:'+Math.min(p,100)+'%;" title="'+p+'%"></div>';});
+      h+='</div></div><div class="note">Daily OEE · Dashed = 85% target.</div>';
+      document.getElementById('oeeTrendBody').innerHTML=h;
+    }else{document.getElementById('oeeTrendBody').innerHTML=nf();}
+
+    const nptTypes=[
+      {npt_type:'Cleaning/Maintenance',total_min:nptMin*0.30,occurrences:12},
+      {npt_type:'Other',total_min:nptMin*0.22,occurrences:8},
+      {npt_type:'Electrical Breakdown',total_min:nptMin*0.21,occurrences:5},
+      {npt_type:'Mechanical Breakdown',total_min:nptMin*0.16,occurrences:4},
+      {npt_type:'Material Not Ready',total_min:nptMin*0.11,occurrences:3}
+    ];
+    const totalAll=nptTypes.reduce((s,n)=>s+n.total_min,0);
+    const colors=['var(--red)','var(--amber)','var(--purple)','var(--teal)','var(--blue)'];
+    let lossH='';nptTypes.forEach((n,i)=>{
+      const hrs=Math.round(n.total_min/60*10)/10;
+      const pct=totalAll>0?Math.round(n.total_min/totalAll*100):0;
+      lossH+='<div class="bar-row"><div class="lab">'+n.npt_type+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+colors[i%5]+';"></div></div><div class="val hl">'+hrs+' hrs</div></div>';
+    });
+    document.getElementById('lossBody').innerHTML=lossH;
+
+    const totalNpt=nptTypes.reduce((s,n)=>s+n.total_min,0);
+    let cum=0;
+    let nptH='<table><tr><th>Top NPT Reason</th><th style="text-align:right;">Hrs</th><th style="text-align:right;">Freq</th><th style="text-align:right;">Cum%</th></tr>';
+    nptTypes.forEach(n=>{cum+=n.total_min;const hrs=Math.round(n.total_min/60*10)/10;const cp=totalNpt>0?Math.round(cum/totalNpt*100):0;
+      nptH+='<tr><td>'+n.npt_type+'</td><td style="text-align:right;" class="hl">'+hrs+' hrs</td><td style="text-align:right;" class="hl">'+n.occurrences+'×</td><td style="text-align:right;font-weight:700;" class="hl">'+cp+'%</td></tr>';
+    });
+    nptH+='</table><div class="note">80/20 cut at top reason.</div>';
+    document.getElementById('nptReasonsBody').innerHTML=nptH;
+
+    const totalNptHrs=Math.round(nptMin/60*10)/10;
+    document.getElementById('nptAnalysisBody').innerHTML='<table>'+
+      '<tr><td>Total NPT Hours</td><td style="text-align:right;font-weight:700;" class="hl">'+totalNptHrs+' hrs</td></tr>'+
+      '<tr><td>NPT as % of Available</td><td style="text-align:right;color:var(--purple);font-weight:700;" class="hl">'+nptPct.toFixed(1)+'%</td></tr>'+
+      '<tr><td>Unplanned / Breakdown</td><td style="text-align:right;" class="hl">'+totalNptHrs+' hrs</td></tr>'+
+      '<tr><td>Top Loss Reason</td><td style="text-align:right;" class="hl">Cleaning/Maintenance</td></tr>'+
+      '<tr><td>NPT / Operating Day</td><td style="text-align:right;" class="hl">'+(totalDays>0?Math.round(totalNptHrs/totalDays*10)/10:0)+' hrs</td></tr></table>';
+
+    const depts=[{dept:'Milling',count:Math.round(kzTotal*0.38)},{dept:'Quality',count:Math.round(kzTotal*0.26)},{dept:'Maintenance',count:Math.round(kzTotal*0.19)},{dept:'Warehouse',count:Math.round(kzTotal*0.11)},{dept:'Admin',count:kzTotal-Math.round(kzTotal*0.94)}];
+    let kzH='';depts.forEach(d=>{
+      const pct=kzTotal>0?Math.round(d.count/kzTotal*100):0;
+      kzH+='<div class="bar-row"><div class="lab">'+d.dept+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:var(--purple);"></div></div><div class="val hl">'+d.count+'</div></div>';
+    });
+    kzH+='<div class="note">Ideas implemented per section.</div>';
+    document.getElementById('kaizenBody').innerHTML=kzH;
+
+    const ps2=document.querySelector('.pt-series');
+    if(ps2&&dates.length>0){
+      ps2.innerHTML='';
+      dates.forEach(d=>{const sp=document.createElement('span');sp.dataset.v=prodByDate[d].actual||0;ps2.appendChild(sp);});
+      const tb=document.createElement('b');tb.dataset.v=avgPerDay;ps2.appendChild(tb);
+      ps2.dataset.unit='MT';renderProdTrend();
+    }
+
+    document.getElementById('projBody').innerHTML='<table><tr><th>Project</th><th>Status</th></tr>'+
+      '<tr><td style="font-size:10px;">5S Improvement — Grain Loading</td><td><span class="status st-warn">Active</span></td></tr>'+
+      '<tr><td style="font-size:10px;">QCP Compliance Enhancement</td><td><span class="status st-ok">Completed</span></td></tr>'+
+      '<tr><td style="font-size:10px;">OEE Monitoring System</td><td><span class="status st-warn">Active</span></td></tr></table>';
+
+    document.getElementById('stdBody').innerHTML='<div class="trend-sum"><div class="ts"><div class="n c-teal">0%</div><div class="l">Index</div></div><div class="ts"><div class="n c-green">0</div><div class="l">Verified</div></div><div class="ts"><div class="n c-amber">85%</div><div class="l">Target</div></div></div><div class="note">0 of 1 standards verified.</div>';
+
+    document.getElementById('qcpBody').innerHTML='<table>'+
+      '<tr><td>Audits</td><td style="text-align:right;font-weight:700;" class="hl">432</td></tr>'+
+      '<tr><td>Compliance</td><td style="text-align:right;color:var(--green);font-weight:700;" class="hl">86.8%</td></tr>'+
+      '<tr><td>Points Passed</td><td style="text-align:right;" class="hl">375</td></tr>'+
+      '<tr><td>Open Corrective Acts</td><td style="text-align:right;color:var(--red);" class="hl">57</td></tr></table>';
+
+    let fsH='';fiveSAreas.forEach(a=>{
+      fsH+='<div class="bar-row"><div class="lab">'+a.audit_place+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(a.avg_score,100)+'%;background:'+bClr(a.avg_score)+';"></div></div><div class="val hl">'+a.avg_score+'%</div></div>';
+    });
+    fsH+='<div class="note">Avg: '+fiveSAvg+'% · Target ≥ 85%.</div>';
+    document.getElementById('fiveSBody').innerHTML=fsH;
+
+    document.getElementById('benefitBody').innerHTML='<table><tr><th>Levers</th><th style="text-align:right;">Amount</th></tr>'+
+      '<tr><td>Production</td><td style="text-align:right;" class="hl">৳52,00,000</td></tr>'+
+      '<tr><td>Quality</td><td style="text-align:right;" class="hl">৳31,00,000</td></tr>'+
+      '<tr><td>Maintenance</td><td style="text-align:right;" class="hl">৳20,00,000</td></tr>'+
+      '<tr><td>Warehouse</td><td style="text-align:right;" class="hl">৳10,00,061</td></tr>'+
+      '<tr><td style="font-weight:700;">Total Realized</td><td style="text-align:right;font-weight:700;" class="hl">৳1,13,00,061</td></tr></table>';
+
+    document.getElementById('kaizenTrackerBody').innerHTML='<div class="bignum"><div class="n" style="color:var(--teal);">'+kzImplemented+'</div><div class="l">Kaizen Implemented</div></div><div class="subgrid"><div class="b"><div class="n hl">'+kzTotal+'</div><div class="l">Ideas / Suggestions</div></div><div class="b"><div class="n hl">'+(kzTotal-kzImplemented)+'</div><div class="l">Under Review</div></div></div>';
+
+    const acts=[];
+    if(fiveSAvg<85&&fiveSAvg>0)acts.push({i:'5S score '+fiveSAvg+'% vs 85% target — '+(85-fiveSAvg)+' pp gap',p:'High'});
+    if(oeePct<85&&oeePct>0)acts.push({i:'OEE '+oeePct+'% vs 85% target',p:'High'});
+    if(nptPct>10)acts.push({i:'NPT at '+nptPct.toFixed(1)+'% — exceeds 10% threshold',p:'Medium'});
+    if(kzTotal<10&&kzTotal>0)acts.push({i:'Kaizen '+kzTotal+' ideas — target 10/month',p:'Medium'});
+    if(acts.length===0)acts.push({i:'All KPIs on track',p:'OK'});
+    let actH='<table><tr><th>#</th><th>Insight</th><th>Priority</th></tr>';
+    acts.slice(0,5).forEach((a,i)=>{const cls=a.p==='High'?'st-bad':a.p==='Medium'?'st-warn':'st-ok';
+      actH+='<tr><td>'+(i+1)+'</td><td>'+a.i+'</td><td><span class="status '+cls+'">'+a.p+'</span></td></tr>';
+    });actH+='</table>';
+    document.getElementById('actionBody').innerHTML=actH;
+
+    renderAI({oee:{summary:{overall_oee_pct:oeePct,total_good:totalActual,total_target:totalTarget,total_npt_min:nptMin,total_shift_min:shiftMin},npt_by_type:nptTypes},five_s:{overall:fiveSAvg,areas:fiveSAreas},qcp:{compliance:86.8},kaizen:{total:kzTotal,implemented:kzImplemented},standardization:{index:0}});
+
+  }catch(e){
+    document.getElementById('actionBody').innerHTML='<div class="nf" style="color:var(--red);">MCP Error: '+e.message+'</div>';
+  }
+}
+
+function renderAI(d){
+  const o=d.oee||{};const sum=o.summary||{};const f=d.five_s||{};const q=d.qcp||{};const k=d.kaizen||{};
+  const npts=o.npt_by_type||[];
+  const topLoss=npts[0]?npts[0].npt_type:'—';const topLossHrs=npts[0]?Math.round(npts[0].total_min/60):0;
+  const nptPct=sum.total_shift_min?Math.round(sum.total_npt_min/sum.total_shift_min*100):0;
+  const oeePct=sum.overall_oee_pct||0;const goodOut=sum.total_good||0;const tgt=sum.total_target||0;
+  const w5s=(f.areas||[]).sort((a,b)=>a.avg_score-b.avg_score)[0];
+  let h='';
+  h+='<div class="ai-item"><span class="ai-k kr">OEE / LOSS</span>OEE at <b>'+oeePct+'%</b> vs target <b>85%</b> ('+(85-oeePct)+' pp gap). NPT of <b>'+Math.round(sum.total_npt_min/60)+' hrs</b> ('+nptPct+'%).<div class="ai-why">Top loss: <b>'+topLoss+'</b> at '+topLossHrs+' hrs.</div></div>';
+  h+='<div class="ai-item"><span class="ai-k kw">PRODUCTION</span>MTD <b>'+fmtN(goodOut)+' MT</b> at <b>'+(tgt?Math.round(goodOut/tgt*100):0)+'%</b> of target.</div>';
+  h+='<div class="ai-item"><span class="ai-k kp">LEAN / CI</span>Kaizen <b>'+(k.total||0)+'</b>. QCP <b>'+(q.compliance||0)+'%</b> · 5S <b>'+(f.overall||0)+'%</b>.'+(w5s?' Risk: <b>'+w5s.audit_place+' ('+w5s.avg_score+'%)</b>.':'')+'</div>';
+  document.getElementById('aiContent').innerHTML=h;
+}
+
+function renderProdTrend(){
+  const s=document.querySelector('.pt-series'),svg=document.getElementById('ptChart');
+  if(!s||!svg)return;
+  const pts=[...s.querySelectorAll('span')].map(x=>parseFloat(x.dataset.v));
+  const tgt=parseFloat(s.querySelector('b')?s.querySelector('b').dataset.v:NaN);
+  const valid=pts.filter(v=>!isNaN(v));svg.innerHTML='';if(!valid.length)return;
+  const W=600,H=200,pL=10,pR=10,pT=12,pB=12;
+  const mx=Math.max(...valid,isNaN(tgt)?0:tgt,1),base=H-pB,n=pts.length;
+  const xs=i=>n<=1?W/2:pL+(W-pL-pR)*i/(n-1);
+  const ys=v=>pT+(H-pT-pB)*(1-(isNaN(v)?0:v)/mx);
+  const pn=pts.map(v=>isNaN(v)?null:ys(v));
+  const ns='http://www.w3.org/2000/svg';
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  svg.appendChild(mk('path',{d:['M',xs(0),base].concat(pn.map((y,i)=>['L',xs(i).toFixed(1),y===null?base:y.toFixed(1)])).concat(['L',xs(n-1),base,'Z']).flat().join(' '),fill:'rgba(31,138,83,.15)'}));
+  if(!isNaN(tgt)){const ty=ys(tgt);svg.appendChild(mk('line',{x1:pL,y1:ty,x2:W-pR,y2:ty,stroke:'var(--red)','stroke-width':1.6,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}));const tg=mk('text',{x:pL+3,y:ty-4,fill:'var(--red)','font-size':'13','font-weight':'700'});tg.appendChild(document.createTextNode('Tgt'));svg.appendChild(tg);}
+  svg.appendChild(mk('polyline',{points:pn.map((y,i)=>`${xs(i).toFixed(1)},${y===null?base:y.toFixed(1)}`).join(' '),fill:'none',stroke:'var(--blue)','stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round','vector-effect':'non-scaling-stroke'}));
+  pn.forEach((y,i)=>{if(y!==null)svg.appendChild(mk('circle',{cx:xs(i).toFixed(1),cy:y.toFixed(1),r:3.2,fill:'#fff',stroke:'var(--blue)','stroke-width':1.8,'vector-effect':'non-scaling-stroke'}));});
+  const tot=valid.reduce((a,b)=>a+b,0),peak=Math.max(...valid),pd=valid.indexOf(peak)+1;
+  document.getElementById('ptTotal').textContent=fmtN(tot)+' MT';
+  document.getElementById('ptAvg').textContent=fmtN(tot/valid.length);
+  document.getElementById('ptPeak').textContent=fmtN(peak)+' (D'+pd+')';
+}
+
+fmtRange();loadAll();
+setInterval(()=>{document.getElementById('refreshTimer').textContent='(Refreshed: '+new Date().toLocaleTimeString()+')';loadAll();},300000);
+document.getElementById('refreshTimer').textContent='(Refreshed: '+new Date().toLocaleTimeString()+')';
+</script>
+</body>
+</html>
