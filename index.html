@@ -235,13 +235,24 @@ async function mcpCall(tool,args={}){
 }
 
 function parseTable(text){
-  const lines=text.split('\n').filter(l=>l.includes('|')&&l.includes('---')===false);
-  if(lines.length<2)return[];
-  const headers=lines[0].split('|').map(h=>h.trim()).filter(Boolean);
+  const lines=text.split('\n');
+  let headerIdx=-1;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(l.includes('---'))continue;
+    const parts=l.split('|').map(p=>p.trim()).filter(Boolean);
+    if(parts.length>=2&&parts.some(p=>/^[A-Z]/.test(p))&&!l.includes('rows:')&&!l.includes('Month-to-date:')){
+      if(i+1<lines.length&&lines[i+1].includes('---')){headerIdx=i;break;}
+      if(headerIdx===-1)headerIdx=i;
+    }
+  }
+  if(headerIdx===-1)return[];
+  const headers=lines[headerIdx].split('|').map(h=>h.trim()).filter(Boolean);
   const rows=[];
-  for(let i=1;i<lines.length;i++){
-    if(lines[i].includes('---'))continue;
-    const vals=lines[i].split('|').map(v=>v.trim()).filter(Boolean);
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(l.includes('---')||l.length<3)continue;
+    const vals=l.split('|').map(v=>v.trim()).filter(Boolean);
     if(vals.length>=headers.length){
       const row={};
       headers.forEach((h,j)=>row[h]=vals[j]);
@@ -270,19 +281,19 @@ async function loadAll(){
 
     const prodRows=parseTable(prodText).filter(r=>r.SBU==='HRML'||r.SBU==='MRML');
 
-    const fiveSLines=fiveSText.split('\n').filter(l=>(l.includes('HRML')||l.includes('MRML'))&&!l.includes('---'));
-    const fiveSRows=[];
-    fiveSLines.forEach(line=>{
-      const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
-      if(parts.length>=3)fiveSRows.push({date:parts[1],score:parseFloat(parts[2])||0});
-    });
+    const fiveSRows=parseTable(fiveSText).filter(r=>(r.SBU==='HRML'||r.SBU==='MRML'));
+    const fiveSAreaScores=fiveSRows.map(r=>parseFloat(r['5S%'])||0).filter(s=>s>0);
+    const fiveSAvg=fiveSAreaScores.length>0?Math.round(fiveSAreaScores.reduce((a,b)=>a+b,0)/fiveSAreaScores.length):0;
+    const fiveSAreas=[
+      {audit_place:'Grain Loading',avg_score:fiveSAvg+2},
+      {audit_place:'Warehouse',avg_score:fiveSAvg+1},
+      {audit_place:'Boiled Milling',avg_score:fiveSAvg-1},
+      {audit_place:'Aromatic Milling',avg_score:fiveSAvg-2}
+    ];
 
-    const kLines=kaizenText.split('\n').filter(l=>(l.includes('HRML')||l.includes('MRML'))&&!l.includes('---'));
-    const kRows=[];
-    kLines.forEach(line=>{
-      const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
-      if(parts.length>=3)kRows.push({month:parts[1],count:parseInt(parts[2])||0});
-    });
+    const kRows=parseTable(kaizenText).filter(r=>(r.SBU==='HRML'||r.SBU==='MRML'));
+    const kzTotal=kRows.reduce((s,r)=>s+(parseInt(r.KaizenCount)||0),0);
+    const kzImplemented=Math.round(kzTotal*0.64);
 
     const tgtRows=parseTable(targetText).filter(r=>r.SBU==='HRML'||r.SBU==='MRML');
     const hrmlTgt=tgtRows.find(r=>r['Month']&&r['Month'].includes(month.substring(5)))||tgtRows[0]||{};
@@ -299,18 +310,6 @@ async function loadAll(){
 
     const avgPerDay=totalDays>0?Math.round(totalActual/totalDays):0;
     const avgPerHr=shiftMin>0?Math.round(totalActual/(shiftMin/60)*10)/10:0;
-
-    const fiveSAreaScores=fiveSRows.map(r=>r.score).filter(s=>s>0);
-    const fiveSAvg=fiveSAreaScores.length>0?Math.round(fiveSAreaScores.reduce((a,b)=>a+b,0)/fiveSAreaScores.length):0;
-    const fiveSAreas=[
-      {audit_place:'Grain Loading',avg_score:fiveSAvg+2},
-      {audit_place:'Warehouse',avg_score:fiveSAvg+1},
-      {audit_place:'Boiled Milling',avg_score:fiveSAvg-1},
-      {audit_place:'Aromatic Milling',avg_score:fiveSAvg-2}
-    ];
-
-    const kzTotal=kRows.reduce((s,r)=>s+r.count,0);
-    const kzImplemented=Math.round(kzTotal*0.64);
 
     document.getElementById('scProdTgt').textContent=fmtN(totalTarget)+' MT';
     document.getElementById('scProdAct').textContent=fmtN(totalActual)+' MT';
