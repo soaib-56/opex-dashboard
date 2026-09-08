@@ -68,7 +68,7 @@ Available tools:
 ## 👤 Author
 
 **MD. Soaib Hossain** — Assistant Officer (Operational Excellence)
-Hashem Rice Mills Ltd (HRML) · Employee ID: 565312
+Hashem Rice Mills Ltd (HRML)
 
 ---
 
