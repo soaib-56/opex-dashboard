@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRML OPEX Dashboard — Live from MCP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef1f6;color:#1a2332;}
+.wrap{max-width:1200px;margin:0 auto;padding:14px;}
+.header{display:grid;grid-template-columns:90px 1fr 200px;gap:18px;background:#fff;border:1px solid #dde3ee;border-radius:6px;padding:16px 18px;align-items:center;margin-bottom:12px;}
+.avatar{width:90px;height:90px;border-radius:6px;overflow:hidden;background:linear-gradient(135deg,#0b2545,#0e9aa7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:700;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+.header h1{font-size:20px;color:#0b2545;margin:0;}
+.header .role{color:#0e9aa7;font-weight:600;font-size:12px;margin-top:2px;}
+.header .tags{color:#5b6779;font-size:11px;margin-top:4px;}
+.logo{width:100%;height:90px;border:1px solid #dde3ee;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.logo img{max-width:100%;max-height:100%;object-fit:contain;}
+.titlebar{background:#0b2545;color:#fff;border-radius:6px;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;}
+.titlebar .t{font-weight:700;}
+.titlebar .sel{display:flex;gap:8px;align-items:center;}
+.pill{background:rgba(255,255,255,.12);padding:5px 12px;border-radius:4px;font-size:12px;}
+.slicer{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:none;border-radius:4px;padding:3px 8px;font-family:inherit;font-size:11px;color:#fff;cursor:pointer;}
+.slicer select{background:transparent;border:none;color:#fff;font-family:inherit;font-size:11px;cursor:pointer;}
+.slicer select option{color:#1a2332;background:#fff;}
+.slicer:focus{background:rgba(255,255,255,.22);outline:none;}
+.row{display:grid;gap:10px;margin-bottom:10px;}
+.r2{grid-template-columns:repeat(2,1fr);}
+.r3{grid-template-columns:repeat(3,1fr);}
+.r4{grid-template-columns:repeat(4,1fr);}
+.panel{background:#fff;border:1px solid #dde3ee;border-radius:6px;overflow:hidden;}
+.phead{background:#13315c;color:#fff;font-size:11px;font-weight:700;padding:7px 12px;}
+.phead.alt{background:#6a3fa0;}.phead.g{background:#1f8a53;}.phead.t{background:#0e9aa7;}
+.pbody{padding:12px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin-bottom:12px;}
+.kpi{background:#eef1f6;border-radius:6px;padding:10px 6px;}
+.kpi .n{font-size:24px;font-weight:800;line-height:1;}
+.kpi .l{font-size:9px;color:#5b6779;margin-top:2px;}
+.kpi.good .n{color:#1f8a53;}.kpi.warn .n{color:#e0972a;}.kpi.bad .n{color:#c8402c;}.kpi.info .n{color:#1f6fd6;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{text-align:left;color:#5b6779;font-weight:600;font-size:10px;text-transform:uppercase;padding:5px 6px;border-bottom:1px solid #dde3ee;}
+td{padding:5px 6px;border-bottom:1px solid #f0f2f5;}
+.bar-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:11px;}
+.bar-row .lab{width:100px;color:#5b6779;flex:none;}
+.bar-track{flex:1;background:#eef1f6;border-radius:3px;height:10px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;}
+.bar-row .val{width:50px;text-align:right;font-weight:600;color:#0b2545;flex:none;}
+.status{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;}
+.st-ok{background:#e3f4ea;color:#1f8a53;}.st-warn{background:#fdeee0;color:#e0972a;}.st-bad{background:#fbe4e1;color:#c8402c;}
+.footer{background:#0b2545;color:#cbd6e6;text-align:center;font-size:11px;padding:10px;border-radius:6px;margin-top:6px;}
+.footer b{color:#fff;}
+.note{font-size:10px;color:#5b6779;margin-top:4px;font-style:italic;}
+.loading{text-align:center;padding:20px;color:#5b6779;font-size:12px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #dde3ee;border-top:2px solid #1f6fd6;border-radius:50%;animation:spin .8s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.mcp-badge{background:#e3f4ea;color:#1f8a53;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="avatar">
+      <img src="photo.jpg" alt="Photo" onerror="this.style.display='none';this.parentElement.textContent='HRML';">
+    </div>
+    <div>
+      <h1>MD. Soaib Hossain</h1>
+      <div class="role">Assistant Officer (Operational Excellence) — Hashem Rice Mills Ltd (HRML)</div>
+      <div class="tags">565312 · HRML Operations · OEE · Kaizen · 5S · QCP · Cost Savings</div>
+    </div>
+    <div class="logo">
+      <img src="Logo.png" alt="Logo" onerror="this.style.display='none';this.parentElement.innerHTML='AKIJ<br>RESOURCES';">
+    </div>
+  </div>
+
+  <div class="titlebar">
+    <div class="t">HRML — OPERATIONAL EXCELLENCE DASHBOARD <span class="mcp-badge">LIVE FROM MCP</span></div>
+    <div class="sel">
+      <div class="pill">Unit: HRML</div>
+      <label class="slicer">
+        <span>📅 Month:</span>
+        <select id="monthSel"></select>
+      </label>
+      <div class="pill" id="refreshTimer" style="font-size:10px;opacity:.7;"></div>
+    </div>
+  </div>
+
+  <!-- KPI Summary -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi info"><div class="n" id="kTotal">—</div><div class="l">Total Production (MT)</div></div>
+    <div class="kpi good"><div class="n" id="kOEE">—</div><div class="l">OEE %</div></div>
+    <div class="kpi warn"><div class="n" id="kYield">—</div><div class="l">Yield %</div></div>
+    <div class="kpi bad"><div class="n" id="kGap">—</div><div class="l">Gap to Target</div></div>
+  </div>
+
+  <!-- Scorecard -->
+  <div class="panel" style="margin-bottom:10px;">
+    <div class="phead">MTD SCORECARD — HRML</div>
+    <div class="pbody">
+      <table>
+        <tr><th>Metric</th><th style="text-align:right;">Target</th><th style="text-align:right;">Actual</th><th style="text-align:right;">Achievement</th><th style="text-align:center;">Status</th></tr>
+        <tr><td>📦 Production (MT)</td><td style="text-align:right;" id="scTgt">—</td><td style="text-align:right;font-weight:700;" id="scAct">—</td><td style="text-align:right;" id="scAch">—</td><td style="text-align:center;" id="scSt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>🏭 OEE %</td><td style="text-align:right;">85%</td><td style="text-align:right;font-weight:700;" id="scOEE">—</td><td style="text-align:right;" id="scOEEAch">—</td><td style="text-align:center;" id="scOEESt"><span class="status st-warn">—</span></td></tr>
+        <tr><td>✅ Yield %</td><td style="text-align:right;">95%</td><td style="text-align:right;font-weight:700;" id="scYield">—</td><td style="text-align:right;" id="scYieldAch">—</td><td style="text-align:center;" id="scYieldSt"><span class="status st-warn">—</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Production by SBU -->
+  <div class="row r2">
+    <div class="panel">
+      <div class="phead g">PRODUCTION BY SBU (Month)</div>
+      <div class="pbody" id="prodBody"><div class="loading"><div class="spinner"></div>Loading from MCP...</div></div>
+    </div>
+    <div class="panel">
+      <div class="phead t">OEE BY SBU (Month)</div>
+      <div class="pbody" id="oeeBody"><div class="loading"><div class="spinner"></div>Loading from MCP...</div></div>
+    </div>
+  </div>
+
+  <!-- 5S + Kaizen -->
+  <div class="row r2">
+    <div class="panel">
+      <div class="phead alt">5S AUDIT SCORES — HRML</div>
+      <div class="pbody" id="fiveSBody"><div class="loading"><div class="spinner"></div>Loading from MCP...</div></div>
+    </div>
+    <div class="panel">
+      <div class="phead g">KAIZEN TRACKER — HRML</div>
+      <div class="pbody" id="kaizenBody"><div class="loading"><div class="spinner"></div>Loading from MCP...</div></div>
+    </div>
+  </div>
+
+  <!-- All SBU Comparison -->
+  <div class="panel" style="margin-bottom:10px;">
+    <div class="phead">ALL SBU COMPARISON — Production + OEE</div>
+    <div class="pbody" id="allSbuBody"><div class="loading"><div class="spinner"></div>Loading from MCP...</div></div>
+  </div>
+
+  <div class="footer">
+    Data sourced live from <b>MCP Server</b> (akij-opex-kpi) · No local API required · 
+    Developed by <b>MD. Soaib Hossain</b>
+  </div>
+</div>
+
+<script>
+const MCP='https://vercel-liard-eight-31.vercel.app/api/mcp';
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Populate month selector
+const sel=document.getElementById('monthSel');
+const now=new Date();
+for(let i=0;i<6;i++){
+  const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+  const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const label=MONTHS[d.getMonth()]+' '+d.getFullYear();
+  const opt=document.createElement('option');
+  opt.value=ym;opt.textContent=label;
+  if(i===0)opt.selected=true;
+  sel.appendChild(opt);
+}
+sel.addEventListener('change',()=>loadAll());
+
+async function mcpCall(tool,args={}){
+  const r=await fetch(MCP,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:tool,arguments:args}})
+  });
+  const j=await r.json();
+  if(j.result&&j.result.content&&j.result.content[0])return j.result.content[0].text;
+  return '';
+}
+
+function parseTable(text){
+  const lines=text.split('\n').filter(l=>l.includes('|'));
+  if(lines.length<2)return[];
+  const headers=lines[0].split('|').map(h=>h.trim()).filter(Boolean);
+  const rows=[];
+  for(let i=2;i<lines.length;i++){
+    const vals=lines[i].split('|').map(v=>v.trim()).filter(Boolean);
+    if(vals.length>=headers.length){
+      const row={};
+      headers.forEach((h,j)=>row[h]=vals[j]);
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function fmtN(v){return v!=null?Math.round(v).toLocaleString('en-US'):'—';}
+function bClr(p){return p>=80?'#1f8a53':p>=60?'#0e9aa7':p>=40?'#e0972a':'#c8402c';}
+function sCls(v,t){return v>=t?'st-ok':v>=t*.9?'st-warn':'st-bad';}
+
+async function loadAll(){
+  const month=sel.value;
+  document.getElementById('refreshTimer').textContent='Refreshing: '+new Date().toLocaleTimeString();
+
+  try{
+    // Fetch all data in parallel
+    const [kpiText, prodText, oeeText, targetText, fiveSText, kaizenText]=await Promise.all([
+      mcpCall('get_kpi_summary',{month}),
+      mcpCall('get_production',{month,limit:500}),
+      mcpCall('get_production',{month,limit:500}),
+      mcpCall('get_targets'),
+      mcpCall('get_5s',{limit:200}),
+      mcpCall('get_kaizen',{limit:200})
+    ]);
+
+    // Parse KPI summary
+    const kpiRows=parseTable(kpiText);
+    const hrmlKpi=kpiRows.find(r=>r.SBU==='HRML');
+    if(hrmlKpi){
+      document.getElementById('kTotal').textContent=fmtN(hrmlKpi.Actual);
+      document.getElementById('kOEE').textContent=hrmlKpi.OEE+'%';
+      document.getElementById('kYield').textContent=hrmlKpi.Yield+'%';
+      document.getElementById('kGap').textContent=fmtN(hrmlKpi.GapToFill);
+
+      // Scorecard
+      document.getElementById('scTgt').textContent=fmtN(hrmlKpi.TargetMTD);
+      document.getElementById('scAct').textContent=fmtN(hrmlKpi.Actual);
+      const achPct=hrmlKpi.TargetMTD>0?Math.round(hrmlKpi.Actual/hrmlKpi.TargetMTD*100):0;
+      document.getElementById('scAch').textContent=achPct+'%';
+      document.getElementById('scSt').innerHTML='<span class="status '+sCls(achPct,100)+'">'+achPct+'%</span>';
+      document.getElementById('scOEE').textContent=hrmlKpi.OEE+'%';
+      document.getElementById('scOEEAch').textContent=Math.round(hrmlKpi.OEE/85*100)+'%';
+      document.getElementById('scOEESt').innerHTML='<span class="status '+sCls(hrmlKpi.OEE,85)+'">'+hrmlKpi.OEE+'%</span>';
+      document.getElementById('scYield').textContent=hrmlKpi.Yield+'%';
+      document.getElementById('scYieldAch').textContent=Math.round(hrmlKpi.Yield/95*100)+'%';
+      document.getElementById('scYieldSt').innerHTML='<span class="status '+sCls(hrmlKpi.Yield,95)+'">'+hrmlKpi.Yield+'%</span>';
+    }
+
+    // Production by SBU bar chart
+    const prodData=kpiRows.sort((a,b)=>b.Actual-a.Actual);
+    let prodH='';
+    const maxProd=Math.max(...prodData.map(r=>r.Actual||0),1);
+    prodData.forEach(r=>{
+      const pct=Math.round((r.Actual||0)/maxProd*100);
+      prodH+='<div class="bar-row"><div class="lab">'+r.SBU+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+bClr(pct)+';"></div></div><div class="val">'+fmtN(r.Actual)+'</div></div>';
+    });
+    document.getElementById('prodBody').innerHTML=prodH||'<div class="note">No data</div>';
+
+    // OEE by SBU
+    let oeeH='';
+    prodData.sort((a,b)=>(b.OEE||0)-(a.OEE||0));
+    prodData.forEach(r=>{
+      const oee=parseFloat(r.OEE)||0;
+      oeeH+='<div class="bar-row"><div class="lab">'+r.SBU+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(oee,100)+'%;background:'+bClr(oee)+';"></div></div><div class="val">'+oee+'%</div></div>';
+    });
+    document.getElementById('oeeBody').innerHTML=oeeH||'<div class="note">No data</div>';
+
+    // All SBU table
+    let tblH='<table><tr><th>SBU</th><th style="text-align:right;">Actual</th><th style="text-align:right;">Target</th><th style="text-align:right;">Gap</th><th style="text-align:right;">Yield%</th><th style="text-align:right;">OEE%</th><th>Status</th></tr>';
+    prodData.forEach(r=>{
+      const oee=parseFloat(r.OEE)||0;
+      tblH+='<tr><td><b>'+r.SBU+'</b></td><td style="text-align:right;">'+fmtN(r.Actual)+'</td><td style="text-align:right;">'+fmtN(r.TargetMTD)+'</td><td style="text-align:right;">'+fmtN(r.GapToFill)+'</td><td style="text-align:right;">'+r.Yield+'%</td><td style="text-align:right;">'+oee+'%</td><td><span class="status '+sCls(oee,60)+'">'+(oee>=60?'Good':oee>=40?'Fair':'Low')+'</span></td></tr>';
+    });
+    tblH+='</table>';
+    document.getElementById('allSbuBody').innerHTML=tblH;
+
+    // 5S
+    const fiveSLines=fiveSText.split('\n').filter(l=>l.includes('|')&&l.includes('HRML'));
+    let fsH='';
+    if(fiveSLines.length>0){
+      fiveSLines.forEach(line=>{
+        const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
+        if(parts.length>=3){
+          const area=parts[0]||'';
+          const score=parseFloat(parts[2])||0;
+          fsH+='<div class="bar-row"><div class="lab">'+area+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(score,100)+'%;background:'+bClr(score)+';"></div></div><div class="val">'+score+'%</div></div>';
+        }
+      });
+    }
+    document.getElementById('fiveSBody').innerHTML=fsH||'<div class="note">No HRML 5S data found</div>';
+
+    // Kaizen
+    const kLines=kaizenText.split('\n').filter(l=>l.includes('HRML')||l.includes('MRML'));
+    let kzH='';
+    if(kLines.length>0){
+      kLines.forEach(line=>{
+        const parts=line.split('|').map(p=>p.trim()).filter(Boolean);
+        if(parts.length>=3){
+          kzH+='<tr><td>'+parts[0]+'</td><td>'+parts[1]+'</td><td style="font-weight:700;color:#1f6fd6;">'+parts[2]+'</td></tr>';
+        }
+      });
+      kzH='<table><tr><th>SBU</th><th>Month</th><th>Count</th></tr>'+kzH+'</table>';
+    }
+    document.getElementById('kaizenBody').innerHTML=kzH||'<div class="note">No HRML Kaizen data found</div>';
+
+  }catch(e){
+    document.getElementById('prodBody').innerHTML='<div class="note" style="color:#c8402c;">Error: '+e.message+'</div>';
+  }
+}
+
+loadAll();
+setInterval(()=>loadAll(),300000);
+</script>
+</body>
+</html>
